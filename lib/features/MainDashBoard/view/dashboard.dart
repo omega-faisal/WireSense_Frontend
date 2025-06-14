@@ -1,204 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_charts/charts.dart';
-
 import '../../../../../../common/widgets/app_shadow.dart';
-import '../../../../../../common/widgets/plotdata.dart';
 import '../../../../../../common/widgets/text_widgets.dart';
-import '../../../common/Api/api_calling.dart';
 import '../../../common/utils/app_colors.dart';
-import '../../../common/utils/image_res.dart';
-import '../../../common/widgets/app_button_widgets.dart';
 import '../../../common/widgets/app_text_fields.dart';
-import '../../ReversedProcessing/model/data_model_new.dart';
-
-/// Left side Dashboard drawer
-class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
-
-  @override
-  State<Dashboard> createState() => _DashboardState();
-}
-
-class _DashboardState extends State<Dashboard> {
-  final GlobalKey<ScaffoldState> _key = GlobalKey();
-
-  String selectedMenu = 'Dashboard';
-
-  @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          flex: 6,
-          child: Drawer(
-            backgroundColor: Colors.white70,
-            shape: const RoundedRectangleBorder(),
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Image.asset(
-                          ImageRes.letterW,
-                          fit: BoxFit.fill,
-                          height: 50,
-                          width: 50,
-                        ),
-                        const textcustomnormal(
-                          text: "ireSense",
-                          fontWeight: FontWeight.bold,
-                          fontfamily: "Inter",
-                          fontSize: 30,
-                          color: Color(0xff2074F2),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-                dashLine(
-                  height: 0.5,
-                  color: Colors.grey.shade200,
-                ),
-                SizedBox(
-                  height: screenHeight * 0.03,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                  child: ListTile(
-                    minLeadingWidth: 0,
-                    dense: true,
-                    leading: Icon(
-                      Icons.dashboard,
-                      color: selectedMenu == 'Dashboard'
-                          ? Colors.white
-                          : const Color(0xffA3AED0),
-                      size: screenHeight * 0.03,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    tileColor: selectedMenu == 'Dashboard'
-                        ? const Color(0xff4318FF)
-                        : Colors.white70,
-                    title: Transform.translate(
-                      offset: const Offset(-25, 0),
-                      child: textcustomnormal(
-                        text: 'Dashboard',
-                        fontSize: 16,
-                        fontfamily: "Inter",
-                        fontWeight: FontWeight.w400,
-                        color: selectedMenu == 'Dashboard'
-                            ? Colors.white
-                            : const Color(0xffA3AED0),
-                      ),
-                    ),
-                    onTap: () {
-                      // _key.currentState?.closeDrawer();
-                      setState(() {
-                        selectedMenu = 'Dashboard';
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(
-                  height: screenHeight * 0.03,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                  child: ListTile(
-                    minLeadingWidth: 0,
-                    dense: true,
-                    leading: Icon(
-                      size: screenHeight * 0.03,
-                      Icons.download,
-                      color: selectedMenu == 'Predict Physical Prop'
-                          ? Colors.white
-                          : const Color(0xffA3AED0),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    tileColor: selectedMenu == 'Predict Physical Prop'
-                        ? const Color(0xff562efd)
-                        : Colors.white70,
-                    title: textcustomnormal(
-                      text: 'Predict Prop',
-                      fontSize: 16,
-                      fontfamily: "Inter",
-                      fontWeight: FontWeight.w400,
-                      color: selectedMenu == 'Predict Physical Prop'
-                          ? Colors.white
-                          : const Color(0xffA3AED0),
-                    ),
-                    onTap: () {
-                      // _key.currentState?.closeDrawer();
-                      setState(() {
-                        selectedMenu = 'Predict Physical Prop';
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Expanded(
-        //     flex: 1,
-        //     child: Container(
-        //       padding: const EdgeInsets.all(8),
-        //       alignment: Alignment.topCenter,
-        //       height: screenHeight,
-        //       color: Colors.white,
-        //       child: IconButton(
-        //           onPressed: () {
-        //             _key.currentState?.openDrawer();
-        //           },
-        //           icon: const Icon(
-        //             Icons.menu,
-        //             color: Colors.black,
-        //           )),
-        //     )),
-        Expanded(
-          flex: 25,
-          child: getContentWidget(selectedMenu),
-        )
-      ]),
-    );
-  }
-
-  Widget getContentWidget(String menu) {
-    switch (menu) {
-      case 'Predict Physical Prop':
-        return const Center(child: Text('Predict Physical Prop'));
-      case 'Dashboard':
-        return const Center(child: MainDashBoard());
-      default:
-        return const Center(child: MainDashBoard());
-    }
-  }
-}
+import 'dart:html' as html;
 
 class _ChartData {
   _ChartData(this.year, this.sales);
 
   final int year;
-  final int sales;
+  final double sales;
 }
 
-///DashBoard right side section
 class MainDashBoard extends StatefulWidget {
   const MainDashBoard({super.key});
 
@@ -207,875 +26,963 @@ class MainDashBoard extends StatefulWidget {
 }
 
 class _MainDashBoardState extends State<MainDashBoard> {
-  List<_ChartData> chartData = [];
-  List<_ChartData> tempData = [];
-  List<_ChartData> presData = [];
-  List<_ChartData> speedData = [];
-  Timer? timer;
-
-  ChartSeriesController? _chartSeriesController;
-  int count = 01;
-
-  // Random instance
-  final Random random = Random();
-
-  void _updateDataSource(Timer timer) {
-    if (chartData == null) return; // Ensure chartData is not null
-
-    final propertyValue = getPropertyAndItsValue(selectedProperty);
-    if (propertyValue.isEmpty) {
-      if (kDebugMode) {
-        print('property value is null');
-      }
-      return;
-    }; // Ensure propertyValue is not empty
-    chartData.add(_ChartData(count, 60+ random.nextInt(5)));
-    tempData.add(_ChartData(count, 400+ random.nextInt(70)));
-    presData.add(_ChartData(count, 2+ random.nextInt(4)));
-    speedData.add(_ChartData(count, 1+ random.nextInt(5)));
-    // final parsedValue = int.tryParse(propertyValue.first);
-    // if (parsedValue == null) {
-    //   if (kDebugMode) {
-    //     print('parsed value is null');
-    //   }
-    //   return;
-    // } // Ensure parsedValue is valid
-    // if(parsedValue!=null || propertyValue.isNotEmpty){
-    //   chartData.add(_ChartData(count, parsedValue));
-    // }
-    // else{
-    //
-    // }
-    if (chartData.length >= 20) { // Ensure chartData has enough items to remove
-      chartData.removeAt(0);
-      tempData.removeAt(0);
-      presData.removeAt(0);
-      speedData.removeAt(0);
-
-      // Remove the first element to maintain size
-      _chartSeriesController?.updateDataSource(
-        addedDataIndexes: [chartData.length - 1],
-        removedDataIndexes: [0],
-      );
-    }
-    count += 1;
-  }
-
-
-  @override
-  void initState() {
-    getData();
-    searchFieldController = TextEditingController();
-    timer = Timer.periodic(const Duration(seconds: 1), _updateDataSource);
-    super.initState();
-  }
-
-  late List<MeasurementData> dashBoardData;
-
-  Future<void> getData() async {
-    dashBoardData = await Api.getDashBoardData();
-    _simulateRealTimeData(dashBoardData);
-    if (kDebugMode) {
-      print('the dashboard has some data as -> ${dashBoardData[0].elongation}');
-    }
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  List<CastingTemp> temperatureData = [
-    CastingTemp('Q1', 3.0),
-    CastingTemp('Q2', 4.0),
-    CastingTemp('Q3', 2.0),
-    CastingTemp('Q4', 3.0),
-  ];
-
   String selectedConductivityValue = '0';
   String selectedUTSValue = '0';
   String selectedElongationValue = '0';
+  String selectedEMUL_OIL_L_TEMP_PV_VAL0 = '0';
+  String selectedSTAND_OIL_L_TEMP_PV_REAL_VAL0 = '0';
+  String selectedGEAR_OIL_L_TEMP_PV_REAL_VAL0 = '0';
+  String selectedEMUL_OIL_L_PR_VAL0 = '0';
+  String selectedQUENCH_CW_FLOW_EXIT_VAL0 = '0';
+  String selectedCAST_WHEEL_RPM_VAL0 = '0';
+  String selectedBAR_TEMP_VAL0 = '0';
+  String selectedQUENCH_CW_FLOW_ENTRY_VAL0 = '0';
+  String selectedGEAR_OIL_L_PR_VAL0 = '0';
+  String selectedSTANDS_OIL_L_PR_VAL0 = '0';
+  String selectedTUNDISH_TEMP_VAL0 = '0';
+  String selectedRM_MOTOR_COOL_WATER__VAL0 = '0';
+  String selectedROLL_MILL_AMPS_VAL0 = '0';
+  String selectedRM_COOL_WATER_FLOW_VAL0 = '0';
+  String selectedEMULSION_LEVEL_ANALO_VAL0 = '0';
+  String selectedPercentSI = '0';
+  String selectedPercentFE = '0';
+  String selectedPercentTI = '0';
+  String selectedPercentV = '0';
+  String selectedPercentAL = '0';
+  String selectedFurnaceTemperature = '0';
 
-  bool isProceeded = false;
-
-  bool isSelected = false;
-  final List<Map<String, dynamic>> options = [
-    {"icon": Icons.bolt, "name": "Conductivity s/m", "color": Colors.blue},
-    {"icon": Icons.construction, "name": "UTS Mpa", "color": Colors.orange},
-    {"icon": Icons.expand, "name": "Elongation %", "color": Colors.green},
+  final List<String> chartKeys = [
+    'Conductivity', // chart 0
+    'UTS', // chart 1
+    'Elongation', // chart 2
+    'Furnace_Temperature',
+    'GEAR_OIL_L_TEMP_PV_REAL_VAL0',
+    'EMUL_OIL_L_PR_VAL0',
+    'QUENCH_CW_FLOW_EXIT_VAL0',
+    'CAST_WHEEL_RPM_VAL0',
+    'BAR_TEMP_VAL0',
+    'QUENCH_CW_FLOW_ENTRY_VAL0',
+    'GEAR_OIL_L_PR_VAL0',
+    'STANDS_OIL_L_PR_VAL0',
+    'TUNDISH_TEMP_VAL0',
+    'RM_MOTOR_COOL_WATER__VAL0',
+    'ROLL_MILL_AMPS_VAL0',
+    'RM_COOL_WATER_FLOW_VAL0',
+    'EMULSION_LEVEL_ANALO_VAL0',
+    'EMUL_OIL_L_TEMP_PV_VAL0',
+    'STAND_OIL_L_TEMP_PV_REAL_VAL0',
+    '%SI', '%FE', '%TI', '%V', '%AL',
   ];
-  late TextEditingController searchFieldController;
-  bool _switchValue = false;
-  String selectedProperty = 'Conductivity';
-  String selectedPropertyToChange = 'Conductivity';
 
-  String dropdownvalue = 'Elongation';
+  List<Map<String, dynamic>> _apiData = [];
+  int _dataIndex = 0;
+  late Timer _timer;
+  late List<List<_ChartData>> _allChartData;
+  late List<ChartSeriesController?> _controllers;
+  late int _numCharts;
 
-  // List of items in our dropdown menu
-  var properties = [
-    'Elongation',
-    'Conductivity',
-    'UTS',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    searchFieldController = TextEditingController();
+    _numCharts = chartKeys.length;
+    _controllers = List<ChartSeriesController?>.filled(chartKeys.length, null);
+    _allChartData = List.generate(chartKeys.length, (_) => <_ChartData>[]);
+    _fetchDataOnce();
+  }
 
-  List<String> getPropertyAndItsValue(String selProp) {
-    List<String> ans = [];
-    switch (selProp) {
-      case 'Conductivity':
-        return [selectedConductivityValue, 'Conductivity'];
-      case 'UTS':
-        return [selectedUTSValue, 'UTS'];
-      case 'Elongation':
-        return [selectedElongationValue, 'Elongation'];
-      default:
-        return ['Error', 'No case Found'];
+  Future<void> _fetchDataOnce() async {
+    try {
+      final response =
+          await http.get(Uri.parse('http://127.0.0.1:8000/api/predict/'));
+      if (response.statusCode == 200) {
+        final List<dynamic> rawData = json.decode(response.body);
+
+        _apiData = rawData.cast<Map<String, dynamic>>();
+        debugPrint('raw api data is -> ${_apiData[0]}');
+        // Start updating charts from stored data
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _timer = Timer.periodic(
+              const Duration(seconds: 1), (_) => _updateChartsFromStoredData());
+        });
+      } else {
+        if (kDebugMode) {
+          print("Error: ${response.body}");
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching data: $e");
+      }
     }
   }
 
-  Widget _buildOptionCard(Map<String, dynamic> option, double screenHeight,
-      bool isSelected, double screenWidth,
-      {required Function()? click}) {
-// todo - CORRECT IT
-    return GestureDetector(
-      onTap: click!,
-      child: !isSelected
-          ? Container(
-              height: screenHeight * 0.07,
-              child: Card(
-                color: const Color(0xfff3f0ff),
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 7.0),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    children: [
-                      // Icon
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: option['color'].withOpacity(0.2),
-                        child: Icon(option['icon'], color: option['color']),
-                      ),
-                      const SizedBox(width: 16),
-                      // Property Name
-                      Text(
-                        option['name'],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          : Container(
-              height: screenHeight * 0.12,
-              child: Card(
-                color: const Color(0xfff3f0ff),
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 5.0),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    children: [
-                      // Icon
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: option['color'].withOpacity(0.2),
-                        child: Icon(option['icon'], color: option['color']),
-                      ),
-                      const SizedBox(width: 16),
-                      // Property Name
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            option['name'],
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          SizedBox(
-                            width: screenWidth * 0.15,
-                            height: screenHeight * 0.05,
-                            child: TextField(
-                              obscureText: false,
-                              decoration: InputDecoration(
-                                hintText: 'Input Value',
-                                hintStyle: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade500,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: "Inter",
-                                ),
-                                // suffixIcon: IconButton(
-                                //   icon: const Icon(
-                                //     Icons.input,
-                                //     color: Colors.grey,
-                                //   ), onPressed: () {  },
-                                // ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+  double verifyValues(double value, double percentage) {
+    final random = Random();
+    double variation = value * percentage;
+    return value + (random.nextDouble() * 2 - 1) * variation;
+  }
+
+  void _updateChartsFromStoredData() {
+    if (_apiData.isEmpty || _dataIndex >= _apiData.length) return;
+
+    final entry = _apiData[_dataIndex];
+
+    for (int i = 0; i < chartKeys.length; i++) {
+      try {
+        if (i >= _controllers.length || i >= _allChartData.length) {
+          debugPrint(
+              'Skipping update for chart index $i: Controller or data not initialized');
+          continue;
+        }
+
+        final controller = _controllers[i];
+        if (controller == null) continue;
+
+        double value = (entry[chartKeys[i]] ?? 0.0).toDouble();
+        if (chartKeys[i] == 'UTS' ||
+            chartKeys[i] == 'Conductivity' ||
+            chartKeys[i] == 'Elongation') {
+          value = verifyValues(value, 0.01); //
+        }
+
+        final chart = _allChartData[i];
+
+        if (chart.length >= 10) chart.removeAt(0);
+        chart.add(_ChartData(_dataIndex, value));
+
+        controller.updateDataSource(
+          addedDataIndexes: [chart.length - 1],
+          removedDataIndexes: chart.length > 10 ? [0] : [],
+        );
+        // Update current values for display
+        setCurrentParametersAndPropertiesValues(entry);
+      } catch (e) {
+        debugPrint(
+            'Chart update failed at index $i (key: ${chartKeys[i]}): $e');
+      }
+    }
+
+    _dataIndex++;
+    setState(() {});
+  }
+
+  void setCurrentParametersAndPropertiesValues(Map<String, dynamic> entry) {
+    selectedConductivityValue =
+        ((verifyValues(entry['Conductivity'] ?? 1.0, 0.01) as num)
+            .toStringAsFixed(4));
+    selectedUTSValue =
+        ((verifyValues(entry['UTS'] ?? 1.0, 0.01) as num).toStringAsFixed(4));
+    selectedElongationValue =
+        ((verifyValues(entry['Elongation'] ?? 1.0, 0.01) as num)
+            .toStringAsFixed(4));
+    selectedEMUL_OIL_L_TEMP_PV_VAL0 =
+        ((entry['EMUL_OIL_L_TEMP_PV_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedSTAND_OIL_L_TEMP_PV_REAL_VAL0 =
+        ((entry['STAND_OIL_L_TEMP_PV_REAL_VAL0'] ?? 0.0) as num)
+            .toStringAsFixed(2);
+    selectedGEAR_OIL_L_TEMP_PV_REAL_VAL0 =
+        ((entry['GEAR_OIL_L_TEMP_PV_REAL_VAL0'] ?? 0.0) as num)
+            .toStringAsFixed(2);
+    selectedEMUL_OIL_L_PR_VAL0 =
+        ((entry['EMUL_OIL_L_PR_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedQUENCH_CW_FLOW_EXIT_VAL0 =
+        ((entry['QUENCH_CW_FLOW_EXIT_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedCAST_WHEEL_RPM_VAL0 =
+        ((entry['CAST_WHEEL_RPM_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedBAR_TEMP_VAL0 =
+        ((entry['BAR_TEMP_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedQUENCH_CW_FLOW_ENTRY_VAL0 =
+        ((entry['QUENCH_CW_FLOW_ENTRY_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedGEAR_OIL_L_PR_VAL0 =
+        ((entry['GEAR_OIL_L_PR_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedSTANDS_OIL_L_PR_VAL0 =
+        ((entry['STANDS_OIL_L_PR_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedTUNDISH_TEMP_VAL0 =
+        ((entry['TUNDISH_TEMP_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedRM_MOTOR_COOL_WATER__VAL0 =
+        ((entry['RM_MOTOR_COOL_WATER__VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedROLL_MILL_AMPS_VAL0 =
+        ((entry['ROLL_MILL_AMPS_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedRM_COOL_WATER_FLOW_VAL0 =
+        ((entry['RM_COOL_WATER_FLOW_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedEMULSION_LEVEL_ANALO_VAL0 =
+        ((entry['EMULSION_LEVEL_ANALO_VAL0'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedPercentSI = ((entry['%SI'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedPercentFE = ((entry['%FE'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedPercentTI = ((entry['%TI'] ?? 0.0) as num).toStringAsFixed(4);
+    selectedPercentV = ((entry['%V'] ?? 0.0) as num).toStringAsFixed(4);
+    selectedPercentAL = ((entry['%AL'] ?? 0.0) as num).toStringAsFixed(2);
+    selectedFurnaceTemperature =
+        ((entry['Furnace_Temperature'] ?? 0.0) as num).toStringAsFixed(2);
+  }
+
+  Widget plotsRowData({
+    required double screenHeight,
+    required double screenWidth,
+    required int plotIndex,
+    required String parameterName,
+    required String parameterValue,
+  }) {
+    return Container(
+      height: screenHeight * 0.48,
+      width: screenWidth * 0.23,
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+      decoration: appBoxDecoration(
+          radius: 20,
+          borderColor: Colors.transparent,
+          borderWidth: 0.0,
+          color: Colors.white),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: screenHeight * 0.04,
+          ),
+          textcustomnormal(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            fontfamily: "Inter",
+            color: AppColors.dashBoardSecondaryTextColor,
+            text: parameterName,
+          ),
+          // SizedBox(height: screenHeight*0.005,),
+          textcustomnormal(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            fontfamily: "Poppins",
+            color: AppColors.dashBoardPrimaryTextColor,
+            text: parameterValue,
+          ),
+          SizedBox(
+            height: screenHeight * 0.01,
+          ),
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: appBoxDecoration(
+                radius: 5,
+                color: Colors.greenAccent.withOpacity(0.2),
+                borderColor: Colors.transparent,
+                borderWidth: 0.0),
+            child: Center(
+              child: textcustomnormal(
+                fontSize: 12,
+                text: '+45K',
+                fontfamily: "Inter",
+                fontWeight: FontWeight.w500,
+                color: Colors.greenAccent.shade400,
               ),
             ),
+          ),
+          SizedBox(
+            height: screenHeight * 0.01,
+          ),
+          SizedBox(
+              height: screenHeight * 0.3,
+              width: screenWidth * 0.3,
+              child: _buildChart(plotIndex))
+        ],
+      ),
     );
   }
 
-  Widget getResultText(double screenHeight) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const textcustomnormal(
-          fontSize: 20,
-          text: "Suggestions:",
-          color: Color(0xff1B2559),
-          fontfamily: "Inter",
-          fontWeight: FontWeight.w600,
-        ),
-        SizedBox(
-          height: screenHeight * 0.05,
-        ),
-        const Center(
-          child: textcustomnormal(
-            fontSize: 18,
-            text: "Casting Temperature",
-            color: Color(0xff1B2559),
-            fontfamily: "Inter",
-            fontWeight: FontWeight.w500,
+  Widget plotsRowDataForChemicalComp({
+    required double screenHeight,
+    required double screenWidth,
+    required int plotIndex,
+    required String parameterName,
+    required String parameterValue,
+  }) {
+    return Container(
+      height: screenHeight * 0.48,
+      width: screenWidth * 0.23,
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+      decoration: appBoxDecoration(
+          radius: 20,
+          borderColor: Colors.transparent,
+          borderWidth: 0.0,
+          color: Colors.white),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: screenHeight * 0.04,
           ),
-        ),
-        SizedBox(
-          height: screenHeight * 0.02,
-        ),
-        const Center(
-          child: CircleAvatar(
-            backgroundColor: AppColors.mainThemeColor,
-            radius: 80,
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.white,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    textcustomnormal(
-                      fontSize: 16,
-                      text: "12 °C",
-                      color: Color(0xff1B2559),
-                      fontfamily: "Inter",
-                      fontWeight: FontWeight.w500,
-                    ),
-                    SizedBox(
-                      width: 5,
-                    ),
-                    Icon(Icons.arrow_downward)
-                  ],
+          textcustomnormal(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            fontfamily: "Inter",
+            color: AppColors.dashBoardSecondaryTextColor,
+            text: parameterName,
+          ),
+          // SizedBox(height: screenHeight*0.005,),
+          textcustomnormal(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            fontfamily: "Poppins",
+            color: AppColors.dashBoardPrimaryTextColor,
+            text: parameterValue,
+          ),
+          SizedBox(
+            height: screenHeight * 0.01,
+          ),
+          Center(
+            child: Container(
+              width: screenWidth * 0.18,
+              padding: const EdgeInsets.all(5),
+              decoration: appBoxDecoration(
+                  radius: 5,
+                  color: Colors.greenAccent.withOpacity(0.2),
+                  borderColor: Colors.transparent,
+                  borderWidth: 0.0),
+              child: Center(
+                child: textcustomnormal(
+                  fontSize: 12,
+                  text: '+45K',
+                  fontfamily: "Inter",
+                  fontWeight: FontWeight.w500,
+                  color: Colors.greenAccent.shade400,
                 ),
               ),
             ),
           ),
+          SizedBox(
+            height: screenHeight * 0.01,
+          ),
+          SizedBox(
+              height: screenHeight * 0.3,
+              width: screenWidth * 0.3,
+              child: _buildChart(plotIndex))
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChart(int index) {
+    return SfCartesianChart(
+      primaryXAxis: const NumericAxis(),
+      primaryYAxis: const NumericAxis(),
+      series: <LineSeries<_ChartData, int>>[
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            _controllers[index] = controller;
+          },
+          dataSource: _allChartData[index],
+          xValueMapper: (_ChartData data, _) => data.year,
+          yValueMapper: (_ChartData data, _) => data.sales,
         ),
-        Container(
-          alignment: Alignment.bottomRight,
-          child: appButtons(
-              anyWayDoor: () {},
-              width: screenHeight * 0.1,
-              height: screenHeight * 0.05,
-              buttonColor: AppColors.mainThemeColor.withOpacity(0.9),
-              buttonText: 'Approve',
-              buttonTextSize: 14,
-              buttonTextColor: Colors.white),
-        )
       ],
     );
   }
 
-  void _simulateRealTimeData(List<MeasurementData> newData) async {
-    int index = 0;
-    while (index < newData.length) {
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() {
-        selectedConductivityValue = newData[index].conductivity;
-        selectedUTSValue = newData[index].uts;
-        selectedElongationValue = newData[index].elongation;
-      });
-      index++;
+  Widget _buildPropertyChart(int index) {
+    return SfCartesianChart(
+      primaryXAxis: const NumericAxis(),
+      primaryYAxis: const NumericAxis(),
+      series: <LineSeries<_ChartData, int>>[
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            _controllers[index] = controller;
+          },
+          dataSource: _allChartData[index],
+          xValueMapper: (_ChartData data, _) => data.year,
+          yValueMapper: (_ChartData data, _) => data.sales,
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  bool isProceeded = false;
+  final List<Map<String, dynamic>> options = [
+    {"icon": Icons.bolt, "name": "Conductivity IACS", "color": Colors.blue},
+    {"icon": Icons.construction, "name": "UTS Mpa", "color": Colors.orange},
+    {"icon": Icons.expand, "name": "Elongation %", "color": Colors.green},
+  ];
+  late TextEditingController searchFieldController;
+  String selectedProperty = 'Conductivity';
+  String selectedPropertyToChange = 'Conductivity';
+
+  List<String> getPropertyAndItsValue(String selProp) {
+    switch (selProp) {
+      case 'Conductivity':
+        return ['$selectedConductivityValue IACS', 'Conductivity', '0'];
+      case 'UTS':
+        return ['$selectedUTSValue MPa', 'UTS', '1'];
+      case 'Elongation':
+        return ['$selectedElongationValue %', 'Elongation', '2'];
+      default:
+        return ['Error', 'No case Found', '-1'];
     }
   }
 
+  List<String> getParameterAndItsValue(int index) {
+    switch (index) {
+      case 0:
+        return ['Furnace Temperature', '$selectedFurnaceTemperature °C'];
+      case 1:
+        return ['Gear Oil Temp', '$selectedGEAR_OIL_L_TEMP_PV_REAL_VAL0 °C'];
+      case 2:
+        return ['Emulsion Oil Pressure', '$selectedEMUL_OIL_L_PR_VAL0 Bar'];
+      case 3:
+        return ['Quench Exit Flow', '$selectedQUENCH_CW_FLOW_EXIT_VAL0 m³/h'];
+      case 4:
+        return ['Casting Wheel RPM', '$selectedCAST_WHEEL_RPM_VAL0 RPM'];
+      case 5:
+        return ['Bar Temperature', '$selectedBAR_TEMP_VAL0 °C'];
+      case 6:
+        return ['Quench Entry Flow', '$selectedQUENCH_CW_FLOW_ENTRY_VAL0 m³/h'];
+      case 7:
+        return ['Gear Oil Pressure', '$selectedGEAR_OIL_L_PR_VAL0 Bar'];
+      case 8:
+        return ['Stand Oil Pressure', '$selectedSTANDS_OIL_L_PR_VAL0 Bar'];
+      case 9:
+        return ['Tundish Temp', '$selectedTUNDISH_TEMP_VAL0 °C'];
+      case 10:
+        return [
+          'Motor Cooling Water',
+          '$selectedRM_MOTOR_COOL_WATER__VAL0 L/min'
+        ];
+      case 11:
+        return ['Roll Mill Amps', '$selectedROLL_MILL_AMPS_VAL0 A'];
+      case 12:
+        return ['Cooling Water Flow', '$selectedRM_COOL_WATER_FLOW_VAL0 m³/h'];
+      case 13:
+        return ['Emulsion Level', '$selectedEMULSION_LEVEL_ANALO_VAL0 mm'];
+      case 14:
+        return ['Emulsion Oil Temp', '$selectedEMUL_OIL_L_TEMP_PV_VAL0 °C'];
+      case 15:
+        return ['Stand Oil Temp', '$selectedSTAND_OIL_L_TEMP_PV_REAL_VAL0 °C'];
+      case 16:
+        return ['% Silicon', '$selectedPercentSI %'];
+      case 17:
+        return ['% Iron', '$selectedPercentFE %'];
+      case 18:
+        return ['% Titanium', '$selectedPercentTI %'];
+      case 19:
+        return ['% Vanadium', '$selectedPercentV %'];
+      case 20:
+        return ['% Aluminium', '$selectedPercentAL %'];
+      default:
+        return ['Unknown', 'N/A'];
+    }
+  }
+
+  // Widget _buildOptionCard(Map<String, dynamic> option, double screenHeight,
+  //     bool isSelected, double screenWidth,
+  //     {required Function()? click}) {
+  //   return GestureDetector(
+  //     onTap: click!,
+  //     child: !isSelected
+  //         ? SizedBox(
+  //             height: screenHeight * 0.07,
+  //             width: screenWidth * 0.05,
+  //             child: Card(
+  //               color: Colors.white70,
+  //               elevation: 4,
+  //               margin: const EdgeInsets.symmetric(vertical: 7.0),
+  //               shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(16)),
+  //               child: Padding(
+  //                 padding: const EdgeInsets.all(5.0),
+  //                 child: Row(
+  //                   children: [
+  //                     // Icon
+  //                     CircleAvatar(
+  //                       radius: 24,
+  //                       backgroundColor: option['color'].withOpacity(0.2),
+  //                       child: Icon(option['icon'], color: option['color']),
+  //                     ),
+  //                     SizedBox(width: screenWidth * 0.005),
+  //                     // Property Name
+  //                     Text(
+  //                       option['name'],
+  //                       style: const TextStyle(
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.w600,
+  //                         color: Colors.black87,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           )
+  //         : SizedBox(
+  //             height: screenHeight * 0.12,
+  //             width: screenWidth * 0.05,
+  //             child: Card(
+  //               color: const Color(0xfff3f0ff),
+  //               elevation: 4,
+  //               margin: const EdgeInsets.symmetric(vertical: 5.0),
+  //               shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(16)),
+  //               child: Padding(
+  //                 padding: const EdgeInsets.all(5.0),
+  //                 child: Row(
+  //                   children: [
+  //                     // Icon
+  //                     CircleAvatar(
+  //                       radius: 24,
+  //                       backgroundColor: option['color'].withOpacity(0.2),
+  //                       child: Icon(option['icon'], color: option['color']),
+  //                     ),
+  //                     const SizedBox(width: 16),
+  //                     // Property Name
+  //                     Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           option['name'],
+  //                           style: const TextStyle(
+  //                             fontSize: 14,
+  //                             fontWeight: FontWeight.w600,
+  //                             color: Colors.black87,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(
+  //                           height: 5,
+  //                         ),
+  //                         SizedBox(
+  //                           width: screenWidth * 0.13,
+  //                           height: screenHeight * 0.05,
+  //                           child: TextField(
+  //                             obscureText: false,
+  //                             decoration: InputDecoration(
+  //                               hintText: 'Input Value',
+  //                               hintStyle: TextStyle(
+  //                                 fontSize: 14,
+  //                                 color: Colors.grey.shade500,
+  //                                 fontWeight: FontWeight.w400,
+  //                                 fontFamily: "Inter",
+  //                               ),
+  //                               enabledBorder: OutlineInputBorder(
+  //                                 borderRadius: BorderRadius.circular(10),
+  //                                 borderSide: const BorderSide(
+  //                                   color: Colors.white70,
+  //                                 ),
+  //                               ),
+  //                               focusedBorder: OutlineInputBorder(
+  //                                 borderRadius: BorderRadius.circular(10),
+  //                                 borderSide: const BorderSide(
+  //                                   color: Colors.white70,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //   );
+  // }
+
+  // Widget getResultText(double screenHeight) {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.start,
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const textcustomnormal(
+  //         fontSize: 20,
+  //         text: "Suggestions:",
+  //         color: Color(0xff1B2559),
+  //         fontfamily: "Inter",
+  //         fontWeight: FontWeight.w600,
+  //       ),
+  //       SizedBox(
+  //         height: screenHeight * 0.05,
+  //       ),
+  //       const Center(
+  //         child: textcustomnormal(
+  //           fontSize: 18,
+  //           text: "Casting Temperature",
+  //           color: Color(0xff1B2559),
+  //           fontfamily: "Inter",
+  //           fontWeight: FontWeight.w500,
+  //         ),
+  //       ),
+  //       SizedBox(
+  //         height: screenHeight * 0.02,
+  //       ),
+  //       const Center(
+  //         child: CircleAvatar(
+  //           backgroundColor: AppColors.mainThemeColor,
+  //           radius: 80,
+  //           child: CircleAvatar(
+  //             radius: 60,
+  //             backgroundColor: Colors.white,
+  //             child: Padding(
+  //               padding: EdgeInsets.symmetric(horizontal: 10),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   textcustomnormal(
+  //                     fontSize: 16,
+  //                     text: "12 °C",
+  //                     color: Color(0xff1B2559),
+  //                     fontfamily: "Inter",
+  //                     fontWeight: FontWeight.w500,
+  //                   ),
+  //                   SizedBox(
+  //                     width: 5,
+  //                   ),
+  //                   Icon(Icons.arrow_downward)
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       Container(
+  //         alignment: Alignment.bottomRight,
+  //         child: appButtons(
+  //             anyWayDoor: () {
+  //               setState(() {
+  //                 isProceeded = !isProceeded;
+  //               });
+  //             },
+  //             width: screenHeight * 0.1,
+  //             height: screenHeight * 0.05,
+  //             buttonColor: AppColors.mainThemeColor.withOpacity(0.9),
+  //             buttonText: 'Approve',
+  //             buttonTextSize: 14,
+  //             buttonTextColor: Colors.white),
+  //       )
+  //     ],
+  //   );
+  // }
+
+  
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-        backgroundColor: const Color(0xfff4f7fe),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.02, vertical: screenHeight * 0.05),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const text14normal(
-                  fontfamily: "Inter",
-                  fontWeight: FontWeight.w400,
-                  text: "Hi User,",
-                  color: AppColors.dashBoardSecondaryTextColor,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const text24normal(
-                      fontfamily: "Inter",
-                      fontWeight: FontWeight.w600,
-                      text: "Welcome to Wiresense!",
-                      color: AppColors.dashBoardPrimaryTextColor,
-                    ),
-                    //todo - have a validation here
-                    textLoginBoxWithDimensions(
-                      width: screenWidth * 0.25,
-                      hintText: "Search",
-                      icon: Icons.search_rounded,
-                      controller: searchFieldController,
-                      keyboardType: TextInputType.number,
-                      func: (value) {},
-                    )
-                  ],
-                ),
-                SizedBox(
-                  height: screenHeight * 0.03,
-                ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    propertyContainer(
-                      propertyName: 'CONDUCTIVITY',
-                      propertyValue: double.tryParse(selectedConductivityValue)!
-                          .toStringAsFixed(2),
-                      screenHeight: screenHeight,
-                      screenWidth: screenWidth,
-                      icon: Icons.trending_up,
-                      isSelected: selectedProperty == 'Conductivity',
-                      click: () {
-                        setState(() {
-                          selectedProperty = 'Conductivity';
-                        });
-                      },
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.015,
-                    ),
-                    propertyContainer(
-                      propertyName: 'UTS',
-                      propertyValue:
-                          double.tryParse(selectedUTSValue)!.toStringAsFixed(2),
-                      screenHeight: screenHeight,
-                      screenWidth: screenWidth,
-                      icon: Icons.trending_down,
-                      isSelected: selectedProperty == 'UTS',
-                      click: () {
-                        setState(() {
-                          selectedProperty = 'UTS';
-                        });
-                      },
-                    ),
-                    SizedBox(
-                      width: screenWidth * 0.015,
-                    ),
-                    propertyContainer(
-                      propertyName: 'ELONGATION',
-                      propertyValue: double.tryParse(selectedElongationValue)!
-                          .toStringAsFixed(2),
-                      screenHeight: screenHeight,
-                      screenWidth: screenWidth,
-                      icon: Icons.trending_up,
-                      isSelected: selectedProperty == 'Elongation',
-                      click: () {
-                        setState(() {
-                          selectedProperty = 'Elongation';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: screenHeight * 0.03,
-                ),
-
-                ///Selected Property and Alerts Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      height: screenHeight * 0.48,
-                      width: screenWidth * 0.50,
-                      decoration: appBoxDecoration(
-                          radius: 20,
-                          borderWidth: 0.0,
-                          borderColor: Colors.transparent,
-                          color: Colors.white),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          textcustomnormal(
-                            fontSize: 30,
-                            color: Colors.black,
-                            fontfamily: "Poppins",
-                            fontWeight: FontWeight.w500,
-                            text:
-                                getPropertyAndItsValue(selectedProperty).first,
-                          ),
-                          Row(
-                            children: [
-                              text14normal(
-                                fontWeight: FontWeight.w400,
-                                fontfamily: "Poppins",
-                                color: AppColors.dashBoardSecondaryTextColor,
-                                text: getPropertyAndItsValue(selectedProperty)
-                                    .last,
-                              ),
-                              const Icon(
-                                Icons.arrow_drop_up_sharp,
-                                color: Colors.green,
-                              ),
-                              const textcustomnormal(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                fontfamily: "Poppins",
-                                color: Colors.green,
-                                text: '+2.45 %',
-                              )
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          //todo - to make a real time chart here...
-                          SizedBox(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.4,
-                            child: SfCartesianChart(
-                              series: <LineSeries<_ChartData, int>>[
-                                LineSeries<_ChartData, int>(
-                                  onRendererCreated:
-                                      (ChartSeriesController controller) {
-                                    // Assigning the controller to the _chartSeriesController.
-                                    _chartSeriesController = controller;
-                                  },
-                                  // Binding the chartData to the dataSource of the line series.
-                                  dataSource: chartData,
-                                  xValueMapper: (_ChartData sales, _) =>
-                                      sales.year,
-                                  yValueMapper: (_ChartData sales, _) =>
-                                      sales.sales,
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+      child: Scaffold(
+          backgroundColor: const Color(0xfff4f7fe),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.02,
+                  vertical: screenHeight * 0.05),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const text14normal(
+                    fontfamily: "Inter",
+                    fontWeight: FontWeight.w400,
+                    text: "Hi User,",
+                    color: AppColors.dashBoardSecondaryTextColor,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const text24normal(
+                        fontfamily: "Inter",
+                        fontWeight: FontWeight.w600,
+                        text: "Welcome to Wiresense!",
+                        color: AppColors.dashBoardPrimaryTextColor,
                       ),
-                    ),
+                      //todo - to implement search here
+                      textLoginBoxWithDimensions(
+                        width: screenWidth * 0.25,
+                        hintText: "Search",
+                        icon: Icons.search_rounded,
+                        controller: searchFieldController,
+                        keyboardType: TextInputType.number,
+                        func: (value) {},
+                      )
+                    ],
+                  ),
+                  SizedBox(
+                    height: screenHeight * 0.03,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      propertyContainer(
+                        propertyName: 'CONDUCTIVITY',
+                        propertyValue:
+                            double.tryParse(selectedConductivityValue)!
+                                .toStringAsFixed(2),
+                        screenHeight: screenHeight,
+                        screenWidth: screenWidth,
+                        icon: Icons.trending_up,
+                        isSelected: selectedProperty == 'Conductivity',
+                        click: () {
+                          setState(() {
+                            selectedProperty = 'Conductivity';
+                          });
+                        },
+                      ),
+                      SizedBox(
+                        width: screenWidth * 0.015,
+                      ),
+                      propertyContainer(
+                        propertyName: 'UTS',
+                        propertyValue: double.tryParse(selectedUTSValue)!
+                            .toStringAsFixed(2),
+                        screenHeight: screenHeight,
+                        screenWidth: screenWidth,
+                        icon: Icons.trending_down,
+                        isSelected: selectedProperty == 'UTS',
+                        click: () {
+                          setState(() {
+                            selectedProperty = 'UTS';
+                          });
+                        },
+                      ),
+                      SizedBox(
+                        width: screenWidth * 0.015,
+                      ),
+                      propertyContainer(
+                        propertyName: 'ELONGATION',
+                        propertyValue: double.tryParse(selectedElongationValue)!
+                            .toStringAsFixed(2),
+                        screenHeight: screenHeight,
+                        screenWidth: screenWidth,
+                        icon: Icons.trending_up,
+                        isSelected: selectedProperty == 'Elongation',
+                        click: () {
+                          setState(() {
+                            selectedProperty = 'Elongation';
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: screenHeight * 0.03,
+                  ),
 
-                    ///Alert Container
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 5),
-                      height: screenHeight * 0.48,
-                      width: screenWidth * 0.25,
-                      decoration: appBoxDecoration(
-                          radius: 20,
-                          borderColor: Colors.transparent,
-                          borderWidth: 0.0,
-                          color: Colors.white),
-                      child: isProceeded
-                          ? getResultText(screenHeight)
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  //todo - to remove this alerts Row and keep chemical parameters separately here.
+                  ///Selected Property and Alerts Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        height: screenHeight * 0.50,
+                        width: screenWidth * 0.60,
+                        decoration: appBoxDecoration(
+                            radius: 20,
+                            borderWidth: 0.0,
+                            borderColor: Colors.transparent,
+                            color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            textcustomnormal(
+                              fontSize: screenWidth * 0.025,
+                              color: Colors.black,
+                              fontfamily: "Poppins",
+                              fontWeight: FontWeight.w500,
+                              text: getPropertyAndItsValue(selectedProperty)
+                                  .first,
+                            ),
+                            Row(
                               children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const textcustomnormal(
-                                      fontSize: 22,
-                                      text: "Select Property",
-                                      color: Color(0xff1B2559),
-                                      fontfamily: "Inter",
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 5.0),
-                                      child: Transform.scale(
-                                        scale: 0.7,
-                                        child: CupertinoSwitch(
-                                          value: _switchValue,
-                                          activeColor: Colors.deepPurpleAccent,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _switchValue = value;
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                text14normal(
+                                  fontWeight: FontWeight.w400,
+                                  fontfamily: "Poppins",
+                                  color: AppColors.dashBoardSecondaryTextColor,
+                                  text: getPropertyAndItsValue(
+                                      selectedProperty)[1],
                                 ),
-                                SizedBox(
-                                  height: screenHeight * 0.01,
+                                const Icon(
+                                  Icons.arrow_drop_up_sharp,
+                                  color: Colors.green,
                                 ),
-                                Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      _buildOptionCard(
-                                          options[0],
-                                          screenHeight,
-                                          selectedPropertyToChange ==
-                                              'Conductivity',
-                                          screenWidth, click: () {
-                                        setState(() {
-                                          selectedPropertyToChange =
-                                              "Conductivity";
-                                        });
-                                      }),
-                                      _buildOptionCard(
-                                          options[1],
-                                          screenHeight,
-                                          selectedPropertyToChange ==
-                                              'Elongation',
-                                          screenWidth, click: () {
-                                        setState(() {
-                                          selectedPropertyToChange =
-                                              "Elongation";
-                                        });
-                                      }),
-                                      _buildOptionCard(
-                                          options[2],
-                                          screenHeight,
-                                          selectedPropertyToChange == 'UTS',
-                                          screenWidth, click: () {
-                                        setState(() {
-                                          selectedPropertyToChange = "UTS";
-                                        });
-                                      })
-                                    ]),
-                                SizedBox(
-                                  height: screenHeight * 0.04,
-                                ),
-                                Container(
-                                  alignment: Alignment.bottomRight,
-                                  child: appButtons(
-                                      anyWayDoor: () {
-                                        setState(() {
-                                          isProceeded = true;
-                                        });
-                                      },
-                                      width: screenWidth * 0.07,
-                                      height: screenHeight * 0.05,
-                                      buttonColor: AppColors.mainThemeColor
-                                          .withOpacity(0.9),
-                                      buttonText: 'Proceed',
-                                      buttonTextSize: 14,
-                                      buttonTextColor: Colors.white),
+                                //todo - to actually last 20 mins average here
+                                const textcustomnormal(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  fontfamily: "Poppins",
+                                  color: Colors.green,
+                                  text: '+2.45 %',
                                 )
                               ],
                             ),
-                    )
-                  ],
-                ),
-                SizedBox(
-                  height: screenHeight * 0.04,
-                ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            SizedBox(
+                                height: screenHeight * 0.3,
+                                width: screenWidth * 0.55,
+                                child: Stack(
+                                  children: List.generate(3, (index) {
+                                    return Visibility(
+                                      visible: int.parse(getPropertyAndItsValue(
+                                                  selectedProperty)
+                                              .last) ==
+                                          index,
+                                      child: _buildPropertyChart(index),
+                                    );
+                                  }),
+                                ))
+                          ],
+                        ),
+                      ),
+                      Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 5),
+                          height: screenHeight * 0.50,
+                          width: screenWidth * 0.27,
+                          decoration: appBoxDecoration(
+                              radius: 20,
+                              borderColor: Colors.transparent,
+                              borderWidth: 0.0,
+                              color: Colors.white),
+                          child: ListView.builder(
+                            itemBuilder: (context, index) {
+                              final parameterIndex = index + 16;
+                              return plotsRowDataForChemicalComp(
+                                  screenHeight: screenHeight,
+                                  screenWidth: screenWidth,
+                                  plotIndex: 19 + index,
+                                  parameterName:
+                                      getParameterAndItsValue(parameterIndex)
+                                          .first,
+                                  parameterValue:
+                                      getParameterAndItsValue(parameterIndex)
+                                          .last);
+                            },
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 5,
+                          )),
 
-                /// Plots Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: screenHeight * 0.48,
-                      width: screenWidth * 0.23,
-                      decoration: appBoxDecoration(
-                          radius: 20,
-                          borderColor: Colors.transparent,
-                          borderWidth: 0.0,
-                          color: Colors.white),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: screenHeight * 0.04,
-                          ),
-                          const textcustomnormal(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w400,
-                            fontfamily: "Inter",
-                            color: AppColors.dashBoardSecondaryTextColor,
-                            text: "Casting Temperature",
-                          ),
-                          // SizedBox(height: screenHeight*0.005,),
-                          const textcustomnormal(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            fontfamily: "Poppins",
-                            color: AppColors.dashBoardPrimaryTextColor,
-                            text: "423 K",
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: appBoxDecoration(
-                                radius: 5,
-                                color: Colors.greenAccent.withOpacity(0.2),
-                                borderColor: Colors.transparent,
-                                borderWidth: 0.0),
-                            child: Center(
-                              child: textcustomnormal(
-                                fontSize: 12,
-                                text: '+45K',
-                                fontfamily: "Inter",
-                                fontWeight: FontWeight.w500,
-                                color: Colors.greenAccent.shade400,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.3,
-                            child: SfCartesianChart(
-                              series: <LineSeries<_ChartData, int>>[
-                                LineSeries<_ChartData, int>(
-                                  onRendererCreated:
-                                      (ChartSeriesController controller) {
-                                    // Assigning the controller to the _chartSeriesController.
-                                    _chartSeriesController = controller;
-                                  },
-                                  // Binding the chartData to the dataSource of the line series.
-                                  dataSource: tempData,
-                                  xValueMapper: (_ChartData sales, _) =>
-                                      sales.year,
-                                  yValueMapper: (_ChartData sales, _) =>
-                                      sales.sales,
-                                ),
-                              ],
-                            ),
-                          )
-                          // Container(
-                          //   width: double.maxFinite,
-                          //   child: Image.asset(
-                          //     'assets/images/demo_plot.png',
-                          //     fit: BoxFit.fill,
-                          //   ),
-                          // )
-                        ],
-                      ),
+                      ///Alert Container
+                      // Container(
+                      //   padding: const EdgeInsets.symmetric(
+                      //       horizontal: 20, vertical: 5),
+                      //   height: screenHeight * 0.45,
+                      //   width: screenWidth * 0.25,
+                      //   decoration: appBoxDecoration(
+                      //       radius: 20,
+                      //       borderColor: Colors.transparent,
+                      //       borderWidth: 0.0,
+                      //       color: Colors.white),
+                      //   child: isProceeded
+                      //       ? getResultText(screenHeight)
+                      //       : Column(
+                      //           crossAxisAlignment: CrossAxisAlignment.start,
+                      //           children: [
+                      //             textcustomnormal(
+                      //               fontSize: screenWidth * 0.015,
+                      //               text: "Enter Desired Property Value",
+                      //               color: const Color(0xff1B2559),
+                      //               fontfamily: "Inter",
+                      //               fontWeight: FontWeight.w400,
+                      //             ),
+                      //             SizedBox(
+                      //               height: screenHeight * 0.01,
+                      //             ),
+                      //             Column(
+                      //                 crossAxisAlignment:
+                      //                     CrossAxisAlignment.stretch,
+                      //                 mainAxisAlignment: MainAxisAlignment.start,
+                      //                 children: [
+                      //                   _buildOptionCard(
+                      //                       options[0],
+                      //                       screenHeight,
+                      //                       selectedPropertyToChange ==
+                      //                           'Conductivity',
+                      //                       screenWidth, click: () {
+                      //                     setState(() {
+                      //                       selectedPropertyToChange =
+                      //                           "Conductivity";
+                      //                     });
+                      //                   }),
+                      //                   _buildOptionCard(
+                      //                       options[1],
+                      //                       screenHeight,
+                      //                       selectedPropertyToChange ==
+                      //                           'Elongation',
+                      //                       screenWidth, click: () {
+                      //                     setState(() {
+                      //                       selectedPropertyToChange =
+                      //                           "Elongation";
+                      //                     });
+                      //                   }),
+                      //                   _buildOptionCard(
+                      //                       options[2],
+                      //                       screenHeight,
+                      //                       selectedPropertyToChange == 'UTS',
+                      //                       screenWidth, click: () {
+                      //                     setState(() {
+                      //                       selectedPropertyToChange = "UTS";
+                      //                     });
+                      //                   })
+                      //                 ]),
+                      //             SizedBox(
+                      //               height: screenHeight * 0.04,
+                      //             ),
+                      //             Container(
+                      //               alignment: Alignment.bottomRight,
+                      //               child: appButtons(
+                      //                   anyWayDoor: () {
+                      //                     setState(() {
+                      //                       isProceeded = !isProceeded;
+                      //                     });
+                      //                   },
+                      //                   width: screenWidth * 0.07,
+                      //                   height: screenHeight * 0.05,
+                      //                   buttonColor: AppColors.mainThemeColor
+                      //                       .withOpacity(0.9),
+                      //                   buttonText: 'Proceed',
+                      //                   buttonTextSize: 14,
+                      //                   buttonTextColor: Colors.white),
+                      //             )
+                      //           ],
+                      //         ),
+                      // )
+                    ],
+                  ),
+                  SizedBox(
+                    height: screenHeight * 0.04,
+                  ),
+
+                  /// Plots Row
+                  SizedBox(
+                    height: screenHeight * 0.50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      shrinkWrap: true,
+                      itemCount: _numCharts - 8,
+                      itemBuilder: (context, index) {
+                        int plotsIndex = index + 3;
+                        return plotsRowData(
+                            screenHeight: screenHeight,
+                            screenWidth: screenWidth,
+                            plotIndex: plotsIndex,
+                            parameterName: getParameterAndItsValue(index).first,
+                            parameterValue:
+                                getParameterAndItsValue(index).last);
+                      },
                     ),
-                    Container(
-                      height: screenHeight * 0.48,
-                      width: screenWidth * 0.23,
-                      decoration: appBoxDecoration(
-                          radius: 20,
-                          borderColor: Colors.transparent,
-                          borderWidth: 0.0,
-                          color: Colors.white),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: screenHeight * 0.04,
-                          ),
-                          const textcustomnormal(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w400,
-                            fontfamily: "Inter",
-                            color: AppColors.dashBoardSecondaryTextColor,
-                            text: "Casting Pressure",
-                          ),
-                          // SizedBox(height: screenHeight*0.005,),
-                          const textcustomnormal(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            fontfamily: "Poppins",
-                            color: AppColors.dashBoardPrimaryTextColor,
-                            text: "12 ATM",
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: appBoxDecoration(
-                                radius: 5,
-                                color: Colors.redAccent.withOpacity(0.2),
-                                borderColor: Colors.transparent,
-                                borderWidth: 0.0),
-                            child: Center(
-                              child: textcustomnormal(
-                                fontSize: 12,
-                                text: '-4 ATM',
-                                fontfamily: "Inter",
-                                fontWeight: FontWeight.w500,
-                                color: Colors.redAccent.shade400,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.3,
-                            child: SfCartesianChart(
-                              series: <LineSeries<_ChartData, int>>[
-                                LineSeries<_ChartData, int>(
-                                  onRendererCreated:
-                                      (ChartSeriesController controller) {
-                                    // Assigning the controller to the _chartSeriesController.
-                                    _chartSeriesController = controller;
-                                  },
-                                  // Binding the chartData to the dataSource of the line series.
-                                  dataSource: presData,
-                                  xValueMapper: (_ChartData sales, _) =>
-                                      sales.year,
-                                  yValueMapper: (_ChartData sales, _) =>
-                                      sales.sales,
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    Container(
-                      height: screenHeight * 0.48,
-                      width: screenWidth * 0.23,
-                      decoration: appBoxDecoration(
-                          radius: 20,
-                          borderColor: Colors.transparent,
-                          borderWidth: 0.0,
-                          color: Colors.white),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: screenHeight * 0.04,
-                          ),
-                          const textcustomnormal(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w400,
-                            fontfamily: "Inter",
-                            color: AppColors.dashBoardSecondaryTextColor,
-                            text: "Rolling Speed",
-                          ),
-                          // SizedBox(height: screenHeight*0.005,),
-                          const textcustomnormal(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            fontfamily: "Poppins",
-                            color: AppColors.dashBoardPrimaryTextColor,
-                            text: "12 m/s",
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: appBoxDecoration(
-                                radius: 5,
-                                color: Colors.greenAccent.withOpacity(0.2),
-                                borderColor: Colors.transparent,
-                                borderWidth: 0.0),
-                            child: Center(
-                              child: textcustomnormal(
-                                fontSize: 12,
-                                text: '+3 m/s',
-                                fontfamily: "Inter",
-                                fontWeight: FontWeight.w500,
-                                color: Colors.greenAccent.shade400,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.01,
-                          ),
-                          SizedBox(
-                            height: screenHeight * 0.3,
-                            width: screenWidth * 0.3,
-                            child: SfCartesianChart(
-                              series: <LineSeries<_ChartData, int>>[
-                                LineSeries<_ChartData, int>(
-                                  onRendererCreated:
-                                      (ChartSeriesController controller) {
-                                    // Assigning the controller to the _chartSeriesController.
-                                    _chartSeriesController = controller;
-                                  },
-                                  // Binding the chartData to the dataSource of the line series.
-                                  dataSource: chartData,
-                                  xValueMapper: (_ChartData sales, _) =>
-                                      sales.year,
-                                  yValueMapper: (_ChartData sales, _) =>
-                                      sales.sales,
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ));
+          )),
+    );
   }
 
   Widget propertyContainer(
@@ -1104,7 +1011,8 @@ class _MainDashBoardState extends State<MainDashBoard> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      text20normal(
+                      textcustomnormal(
+                        fontSize: screenWidth * 0.015,
                         text: propertyName,
                         color: Colors.white,
                         fontWeight: FontWeight.w400,
@@ -1114,7 +1022,7 @@ class _MainDashBoardState extends State<MainDashBoard> {
                         height: 5,
                       ),
                       textcustomnormal(
-                        fontSize: 22,
+                        fontSize: screenWidth * 0.013,
                         text: propertyValue,
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
@@ -1149,7 +1057,8 @@ class _MainDashBoardState extends State<MainDashBoard> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        text20normal(
+                        textcustomnormal(
+                          fontSize: screenWidth * 0.015,
                           text: propertyName,
                           color: AppColors.dashBoardSecondaryTextColor,
                           fontWeight: FontWeight.w400,
@@ -1159,7 +1068,7 @@ class _MainDashBoardState extends State<MainDashBoard> {
                           height: 5,
                         ),
                         textcustomnormal(
-                          fontSize: 22,
+                          fontSize: screenWidth * 0.013,
                           text: propertyValue,
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -1201,7 +1110,8 @@ class _MainDashBoardState extends State<MainDashBoard> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                text20normal(
+                textcustomnormal(
+                  fontSize: screenWidth * 0.015,
                   text: propertyName,
                   color: AppColors.dashBoardSecondaryTextColor,
                   fontWeight: FontWeight.w400,
