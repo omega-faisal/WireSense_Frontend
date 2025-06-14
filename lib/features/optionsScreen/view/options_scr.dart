@@ -7,6 +7,8 @@ import '../../../common/utils/image_res.dart';
 import '../../../main.dart';
 
 class FancyAuthScreen extends StatefulWidget {
+  const FancyAuthScreen({super.key});
+
   @override
   FancyAuthScreenState createState() => FancyAuthScreenState();
 }
@@ -320,7 +322,7 @@ class FancyAuthScreenState extends State<FancyAuthScreen>
     /// reverse
     return GestureDetector(
       onTap: (){
-        navKey.currentState?.pushNamed("/input_phy_prop");
+        navKey.currentState?.pushNamed("/reverse_inputs");
       },
       child: SizedBox.expand(
         child: Stack(

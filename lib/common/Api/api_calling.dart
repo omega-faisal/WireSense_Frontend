@@ -1,13 +1,9 @@
 import 'dart:convert';
-import 'dart:js_interop';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
-import '../../features/ReversedProcessing/model/data_model_new.dart';
-
 class Api {
-  static String url = 'http://10.10.210.254:8000';
+  static String url = 'http://127.0.0.1:8000';
 
   /// forward
   static Future<Map<String, dynamic>> getProperties(
@@ -119,35 +115,35 @@ class Api {
   }
 
 
-static Future<List<MeasurementData>> reverseModel() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://127.0.0.1:5000/read-csv-type-1'),
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          print("Fetch charges has been successfully hit");
-        }
-        final Map<String, dynamic> jsonData = json.decode(response.body);
-        List<dynamic> data = jsonData['data'];
-
-        List<MeasurementData> measurementList = data.map((item) => MeasurementData.fromJson(item)).toList();
-        return measurementList;
-      } else if (response.statusCode == 404) {
-        throw Exception('Resource not found');
-      } else if (response.statusCode == 500) {
-        throw Exception('Internal server error');
-      } else {
-        throw Exception('Failed to load data with status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load charges: $e');
-    }
-  }
+// static Future<List<MeasurementData>> reverseModel() async {
+//     try {
+//       final response = await http.get(
+//         Uri.parse('http://127.0.0.1:5000/read-csv-type-1'),
+//         headers: {
+//           'Content-Type': 'application/json; charset=utf-8',
+//         },
+//       );
+//
+//       if (response.statusCode == 200) {
+//         if (kDebugMode) {
+//           print("Fetch charges has been successfully hit");
+//         }
+//         final Map<String, dynamic> jsonData = json.decode(response.body);
+//         List<dynamic> data = jsonData['data'];
+//
+//         List<MeasurementData> measurementList = data.map((item) => MeasurementData.fromJson(item)).toList();
+//         return measurementList;
+//       } else if (response.statusCode == 404) {
+//         throw Exception('Resource not found');
+//       } else if (response.statusCode == 500) {
+//         throw Exception('Internal server error');
+//       } else {
+//         throw Exception('Failed to load data with status code: ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       throw Exception('Failed to load charges: $e');
+//     }
+//   }
 
   static Future<bool> loginUser(
       {required String employeeId, required String password}) async {
@@ -193,31 +189,4 @@ static Future<List<MeasurementData>> reverseModel() async {
       return false;
     }
   }
-
-  static Future<List<MeasurementData>> getDashBoardData() async {
-    try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:5000/read-csv-type-0'));
-
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          print("Fetch charges has been successfully hit");
-        }
-        final Map<String, dynamic> jsonData = json.decode(response.body);
-        List<dynamic> data = jsonData['data'];
-
-        List<MeasurementData> measurementList = data.map((item) => MeasurementData.fromJson(item)).toList();
-        return measurementList;
-      }
-      else if (response.statusCode == 404) {
-        throw Exception('Resource not found');
-      } else if (response.statusCode == 500) {
-        throw Exception('Internal server error');
-      } else {
-        throw Exception('Failed to load data with status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load data: $e');
-    }
-  }
-
 }

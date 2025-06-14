@@ -1,385 +1,349 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:wiresense_frontend/main.dart';
 
-import '../../../common/utils/image_res.dart';
-
-class ReverseOutput extends ConsumerStatefulWidget {
-  const ReverseOutput({
-    super.key,
-    required this.uts,
-    required this.conductivity,
-    required this.elongation,
-  });
-
-  final double? uts;
-  final double? conductivity;
-  final double? elongation;
+class ReverseOutput extends StatefulWidget {
+  const ReverseOutput({super.key});
 
   @override
-  ReverseOutputState createState() => ReverseOutputState();
+  State<ReverseOutput> createState() => _ReverseOutputState();
 }
 
-class ReverseOutputState extends ConsumerState<ReverseOutput> {
+class _ReverseOutputState extends State<ReverseOutput> {
+  Map<String, dynamic>? apiResponse;
+
+  double? uts;
+  double? elongation;
+  double? conductivity;
 
 
-  // Example data for parameters
-  final List<Map<String, dynamic>> editableParameters = [
-    {
-      'name': 'Conductivity',
-      'value': 50,
-      'icon': Icons.bolt,
-      'color': Colors.blue
-    },
-    {
-      'name': 'Elongation',
-      'value': 75,
-      'icon': Icons.straighten,
-      'color': Colors.green
-    },
-    {'name': 'UTS', 'value': 90, 'icon': Icons.speed, 'color': Colors.red},
-  ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-  bool isEditing = false;
+    if (args != null && uts == null) {
+      uts = double.tryParse(args['UTS'].toString());
+      elongation = double.tryParse(args['Elongation'].toString());
+      conductivity = double.tryParse(args['Conductivity'].toString());
+      callReverseApi(); // only once after getting args
+    }
+    else{
+      uts = 10.85;
+      conductivity = 61.27;
+      elongation = 13.40;
+      callReverseApi();
+    }
+  }
 
-  void updateValues() {
-    // Simulate recalculating values based on changes
-    setState(() {});
+  Future<void> callReverseApi() async {
+    final uri = Uri.parse('http://127.0.0.1:8000/api/reverse/'); // todo - your actual API
+    final headers = {"Content-Type": "application/json"};
+    final body = jsonEncode({
+      "UTS": uts,
+      "Elongation": elongation,
+      "Conductivity": conductivity,
+    });
+
+    try {
+      final response = await http.post(uri, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        setState(() {
+          apiResponse = jsonDecode(response.body);
+        });
+      } else {
+        debugPrint("API error: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Exception while calling API: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidht = MediaQuery.of(context).size.width;
-    // give values here..
-    double? emulOilTemp = 0.0;
-    double? standOilTemp = 0;
-    double? gearOilTemp = 0;
-    double? emulOilPr = 0;
-    double? quenchCWFlowExit = 0;
-    double? castWheelRPM =0;
-    double? barTemp ;
-    double? quenchCWFlowEntry = 0;
-    double? gearOilPr = 0;
-    double? standOilPr = 0;
-    double? tundishTemp = 0;
-    double? rmMotorCoolWater = 0;
-    double? rollMillAmps=0;
-    double? rmCoolWaterFlow =0;
-    double? emulsionLevelAnalo=0;
-    double? furnaceTemperature = 0;
 
-    List<Map<String, dynamic>> predictedParameters = [
+    if (apiResponse == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final parameters = [
       {
-        'name': 'Emulsion Oil Temp',
-        'value': emulOilTemp,
-        'range': 25.0,
-        'min': 40.0,
-        'unit': '°C',
+        'name': 'EMUL OIL TEMP',
+        'value': '${apiResponse!["EMUL_OIL_L_TEMP_PV_VAL0"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["EMUL_OIL_L_TEMP_PV_VAL0"], 40, 70),
+        'color': Colors.blue,
+        'lightColor': Colors.blue[100],
       },
       {
-        'name': 'Stand Oil Temp',
-        'value': standOilTemp,
-        'range': 30.0,
-        'min': 39.0,
-        'unit': '°C',
+        'name': 'STAND OIL TEMP',
+        'value': '${apiResponse!["STAND_OIL_L_TEMP_PV_REAL_VAL0"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["STAND_OIL_L_TEMP_PV_REAL_VAL0"], 40, 65),
+        'color': Colors.teal,
+        'lightColor': Colors.teal[100],
       },
       {
-        'name': 'Gear Oil Temp',
-        'value': gearOilTemp,
-        'range': 20.0,
-        'min': 49.0,
-        'unit': '°C',
+        'name': 'GEAR OIL TEMP',
+        'value': '${apiResponse!["GEAR_OIL_L_TEMP_PV_REAL_VAL0"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["GEAR_OIL_L_TEMP_PV_REAL_VAL0"], 40, 65),
+        'color': Colors.purple,
+        'lightColor': Colors.purple[100],
       },
       {
-        'name': 'Emulsion Oil Pressure',
-        'value': emulOilPr,
-        'range': 2.0,
-        'min': 1.00,
-        'unit': 'atm',
+        'name': 'EMUL OIL PRESSURE',
+        'value': '${apiResponse!["EMUL_OIL_L_PR_VAL0"]?.toStringAsFixed(2)} bar',
+        'progress': _progress(apiResponse!["EMUL_OIL_L_PR_VAL0"], 1.0, 3.0),
+        'color': Colors.orange,
+        'lightColor': Colors.yellow[200],
       },
       {
-        'name': 'Quench CW Flow Exit',
-        'value': quenchCWFlowExit,
-        'range': 21.0,
-        'min': -0.03,
-        'unit': 'L/s',
+        'name': 'QUENCH FLOW EXIT',
+        'value': '${apiResponse!["QUENCH_CW_FLOW_EXIT_VAL0"]?.toStringAsFixed(2)} L/min',
+        'progress': _progress(apiResponse!["QUENCH_CW_FLOW_EXIT_VAL0"], 2.0, 10.0),
+        'color': Colors.red,
+        'lightColor': Colors.red[100],
       },
       {
-        'name': 'Cast Wheel RPM',
-        'value': castWheelRPM,
-        'range': 3.0,
-        'min': 1.00,
-        'unit': 'RPM',
+        'name': 'CAST WHEEL RPM',
+        'value': '${apiResponse!["CAST_WHEEL_RPM_VAL0"]?.toStringAsFixed(2)} rpm',
+        'progress': _progress(apiResponse!["CAST_WHEEL_RPM_VAL0"], 1.5, 2.5),
+        'color': Colors.green,
+        'lightColor': Colors.green[100],
       },
       {
-        'name': 'Bar Temp',
-        'value': barTemp,
-        'range': 500.0,
-        'min': 200.0,
-        'unit': '°C',
+        'name': 'BAR TEMPERATURE',
+        'value': '${apiResponse!["BAR_TEMP_VAL0"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["BAR_TEMP_VAL0"], 500, 600),
+        'color': Colors.indigo,
+        'lightColor': Colors.indigo[100],
       },
       {
-        'name': 'Quench CW Flow Entry',
-        'value': quenchCWFlowEntry,
-        'range': 500.0,
-        'min': -0.1,
-        'unit': 'L/s',
+        'name': 'QUENCH FLOW ENTRY',
+        'value': '${apiResponse!["QUENCH_CW_FLOW_ENTRY_VAL0"]?.toStringAsFixed(2)} L/min',
+        'progress': _progress(apiResponse!["QUENCH_CW_FLOW_ENTRY_VAL0"], 70, 300),
+        'color': Colors.cyan,
+        'lightColor': Colors.cyan[100],
       },
       {
-        'name': 'Gear Oil Pressure',
-        'value': gearOilPr,
-        'range': 3.0,
-        'min': 1.00,
-        'unit': 'atm',
+        'name': 'GEAR OIL PRESSURE',
+        'value': '${apiResponse!["GEAR_OIL_L_PR_VAL0"]?.toStringAsFixed(2)} bar',
+        'progress': _progress(apiResponse!["GEAR_OIL_L_PR_VAL0"], 1.5, 3.0),
+        'color': Colors.amber,
+        'lightColor': Colors.amber[100],
       },
       {
-        'name': 'Stands Oil Pressure',
-        'value': standOilPr,
-        'range': 3.0,
-        'min': 1.00,
-        'unit': 'atm',
+        'name': 'STANDS OIL PRESSURE',
+        'value': '${apiResponse!["STANDS_OIL_L_PR_VAL0"]?.toStringAsFixed(2)} bar',
+        'progress': _progress(apiResponse!["STANDS_OIL_L_PR_VAL0"], 1.5, 3.0),
+        'color': Colors.deepPurple,
+        'lightColor': Colors.deepPurple[100],
       },
       {
-        'name': 'Tundish Temp',
-        'value': tundishTemp,
-        'range': 1200.0,
-        'min': -15.0,
-        'unit': '°C',
+        'name': 'TUNDISH TEMP',
+        'value': '${apiResponse!["TUNDISH_TEMP_VAL0"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["TUNDISH_TEMP_VAL0"], 650, 800),
+        'color': Colors.pink,
+        'lightColor': Colors.pink[100],
       },
       {
-        'name': 'RM Motor Cool Water',
-        'value': rmMotorCoolWater,
-        'range': 2.0,
-        'min': 0.0,
-        'unit': 'L/s',
+        'name': 'MOTOR COOL WATER',
+        'value': '${apiResponse!["RM_MOTOR_COOL_WATER__VAL0"]?.toStringAsFixed(2)} L/min',
+        'progress': _progress(apiResponse!["RM_MOTOR_COOL_WATER__VAL0"], 1.0, 2.0),
+        'color': Colors.lime,
+        'lightColor': Colors.lime[100],
       },
       {
-        'name': 'Roll Mill Amps',
-        'value': rollMillAmps,
-        'range': 800.0,
-        'min': 220.0,
-        'unit': 'A',
+        'name': 'ROLL MILL AMPS',
+        'value': '${apiResponse!["ROLL_MILL_AMPS_VAL0"]?.toStringAsFixed(2)} A',
+        'progress': _progress(apiResponse!["ROLL_MILL_AMPS_VAL0"], 300, 500),
+        'color': Colors.deepOrange,
+        'lightColor': Colors.deepOrange[100],
       },
       {
-        'name': 'RM Cool Water Flow',
-        'value': rmCoolWaterFlow,
-        'range': 50.0,
-        'min': 190.0,
-        'unit': 'L/s',
+        'name': 'RM COOL FLOW',
+        'value': '${apiResponse!["RM_COOL_WATER_FLOW_VAL0"]?.toStringAsFixed(2)} L/min',
+        'progress': _progress(apiResponse!["RM_COOL_WATER_FLOW_VAL0"], 200, 250),
+        'color': Colors.brown,
+        'lightColor': Colors.brown[100],
       },
       {
-        'name': 'Emulsion Level Analo',
-        'value': emulsionLevelAnalo,
-        'range': 800.0,
-        'min': 800.0,
-        'unit': '',
+        'name': 'EMULSION LEVEL',
+        'value': '${apiResponse!["EMULSION_LEVEL_ANALO_VAL0"]?.toStringAsFixed(2)} mm',
+        'progress': _progress(apiResponse!["EMULSION_LEVEL_ANALO_VAL0"], 1000, 1300),
+        'color': Colors.grey,
+        'lightColor': Colors.grey[300],
       },
       {
-        'name': 'Furnance Temp',
-        'value': furnaceTemperature,
-        'range': 1200.0,
-        'min': 345.0,
-        'unit': '°C',
+        'name': 'FURNACE TEMP',
+        'value': '${apiResponse!["Furnace_Temperature"]?.toStringAsFixed(2)} °C',
+        'progress': _progress(apiResponse!["Furnace_Temperature"], 700, 800),
+        'color': Colors.black,
+        'lightColor': Colors.grey[400],
       },
     ];
-    return Scaffold(
-      body: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  ImageRes.letterW,
-                  height: screenHeight * 0.1,
-                ),
-                const Text(
-                  "ireSense",
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2074f2),
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          // Editable Parameters Section
-          Container(
-            padding: EdgeInsets.all(10),
-            color: Colors.blueGrey[50],
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: editableParameters.map((param) {
-                    return Card(
-                      margin: EdgeInsets.symmetric(horizontal: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            Text(param['name']),
-                            SizedBox(height: 5),
-                            Row(
-                              children: [
-                                Icon(
-                                  param['icon'],
-                                  color: param['color'],
-                                  size: 28,
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                SizedBox(
-                                  width: 80,
-                                  child: TextField(
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      hintText: param['value'].toString(),
-                                    ),
-                                    enabled: isEditing,
-                                    onChanged: (value) {
-                                      param['value'] =
-                                          int.tryParse(value) ?? param['value'];
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                const Text(
+                  'Input Parameters',
+                  style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                      fontFamily: "Poppins"),
                 ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                SizedBox(height: screenHeight * 0.05),
+                const Row(
                   children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Colors.red, // Red color for Edit button
-                      ),
-                      onPressed: isEditing
-                          ? null
-                          : () {
-                              setState(() {
-                                isEditing = true;
-                              });
-                            },
-                      child: Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Colors.green, // Green color for Confirm button
-                      ),
-                      onPressed: isEditing
-                          ? () async {
-                            //todo - we will have to again call the api from here
-                            // await ref.read(metalProvider.notifier).fetchMetalParameters(uts: editableParameters[2]['value'], conductivity: editableParameters[0]['value'], elongation: editableParameters[1]['value']);
-                            //   setState(() {
-                            //     isEditing = false;
-                            //   });
-                            //   updateValues();
-                              // Call API here to update server values
-                            }
-                          : null,
-                      child: const Text(
-                        'Confirm',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    Expanded(flex: 1, child: Text('Sr.', style: headerStyle)),
+                    Expanded(flex: 3, child: Text('Parameter', style: headerStyle)),
+                    Expanded(flex: 5, child: Text('Initial Graphical Value', style: headerStyle)),
+                    Expanded(flex: 2, child: Text('Initial Numeric Value', style: headerStyle)),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 10),
-
-          // Predicted Parameters
-          Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.all(10),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 1,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 3.5,
-              ),
-              itemCount: predictedParameters.length,
-              itemBuilder: (context, index) {
-                final param = predictedParameters[index];
-                final progress =
-                    (param['value'] - param['min']) / param['range'];
-
-                return Card(
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(param['name']),
-                        ),
-                        Expanded(
-                          flex: 5,
-                          child: Stack(
-                            children: [
-                              Container(
-                                height: 10,
+                SizedBox(height: screenHeight * 0.03),
+                const Divider(thickness: 1.5, color: Color(0xFFE0E0E0)),
+                ListView.builder(itemBuilder: (context,index){
+                  final param = parameters[index];
+                  return Column(
+                    children: [
+                      SizedBox(height: screenHeight * 0.01),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(flex: 1, child: Text('0${index + 1}', style: rowTextStyle)),
+                          Expanded(flex: 3, child: Text(param['name'] as String, style: rowTextStyle)),
+                          Expanded(
+                            flex: 5,
+                            child: buildProgressBar(
+                              progress: param['progress'] as double,
+                              color: param['color'] as Color,
+                              lightColor: param['lightColor'] as Color,
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.01),
+                          Expanded(
+                            flex: 4,
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: (param['color'] as Color).withOpacity(0.6),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: (param['lightColor'] as Color).withOpacity(0.1),
                                 ),
-                              ),
-                              FractionallySizedBox(
-                                widthFactor: progress,
-                                child: Container(
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: progress < 0.4
-                                        ? Colors.green
-                                        : (progress < 0.7
-                                            ? Colors.yellow
-                                            : Colors.red),
-                                    borderRadius: BorderRadius.circular(5),
+                                child: Text(
+                                  param['value'] as String,
+                                  style: TextStyle(
+                                    color: param['color'] as Color,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 10),
-                        Text('${param['value']}' '${param['unit']}'),
-                      ],
+                        ],
+                      ),
+                      SizedBox(height: screenHeight * 0.02),
+                      const Divider(thickness: 1, color: Color(0xFFE0E0E0)),
+                    ],
+                  );
+                },
+                  itemCount: parameters.length,
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                                ),
+                SizedBox(height: screenHeight*0.08),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      navKey.currentState?.pushNamed('/dashboard');
+                    },
+                    icon: const Icon(Icons.check_box, color: Colors.white),
+                    label: const Text('Proceed'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                      backgroundColor: const Color(0xFF3F00FF),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      shadowColor: const Color(0xFF3F00FF),
+                      elevation: 10,
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  double _progress(dynamic value, double min, double max) {
+    if (value == null) return 0.0;
+    final val = value as double;
+    return ((val - min) / (max - min)).clamp(0.0, 1.0);
+  }
+  Widget buildProgressBar({
+    required double progress,
+    required Color color,
+    required Color lightColor,
+  }) {
+    return Stack(
+      children: [
+        Container(
+          height: 10,
+          decoration: BoxDecoration(
+            color: lightColor,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+        FractionallySizedBox(
+          widthFactor: progress,
+          child: Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-//16 parameters
+const TextStyle headerStyle = TextStyle(
+  fontWeight: FontWeight.w600,
+  fontSize: 16,
+  fontFamily: "Inter",
+  color: Colors.black87,
+);
+
+const TextStyle rowTextStyle = TextStyle(
+  fontSize: 15,
+  color: Colors.black87,
+  fontFamily: "Inter",
+);

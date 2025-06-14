@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/ForwardProcessing/ForwardInput/view/forward_input.dart';
-import '../../features/ForwardProcessing/ForwardOutputScreen/view/forward_output.dart';
 import '../../features/LoginScreen/view/login_scr.dart';
 import '../../features/MainDashBoard/view/dashboard.dart';
 import '../../features/ReversedProcessing/ReverseInputscreen/reverse_input_screen.dart';
@@ -14,16 +12,10 @@ class appPages {
     return [
       RouteEntity(
           path: AppRoutes.DASHBOARD,
-          page: const ProviderScope(child: Dashboard())),
+          page: const ProviderScope(child: MainDashBoard())),
       RouteEntity(
           path: AppRoutes.OPTIONS,
-          page: ProviderScope(child: FancyAuthScreen())),
-      RouteEntity(
-          path: AppRoutes.FORWARDINPUTS,
-          page: const ProviderScope(child: ForwardInputScreen())),
-      RouteEntity(
-          path: AppRoutes.FORWARDOUTPUTS,
-          page: const ProviderScope(child: ForwardOutput(null,null,null))),
+          page: const ProviderScope(child: FancyAuthScreen())),
       RouteEntity(
           path: AppRoutes.LOGIN,
           page: const ProviderScope(child: LoginPage())),
@@ -32,7 +24,7 @@ class appPages {
           page: ProviderScope(child: ControlCenterPage())),
       RouteEntity(
           path: AppRoutes.REVERSEOUTPUTS,
-          page: const ProviderScope(child: ReverseOutput(uts: null, conductivity: null, elongation: null,))),
+          page: const ProviderScope(child: ReverseOutput())),
     ];
   }
 
@@ -46,7 +38,7 @@ class appPages {
       if(result.first.path ==AppRoutes.LOGIN)
         {
           return MaterialPageRoute(
-              builder: (_) => const ProviderScope(child: LoginPage()),
+              builder: (_) => const ProviderScope(child: FancyAuthScreen()),
               settings: settings);
         }
       else{
